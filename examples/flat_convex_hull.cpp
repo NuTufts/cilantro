@@ -1,7 +1,10 @@
 #include <cilantro/flat_convex_hull_3d.hpp>
 #include <cilantro/point_cloud.hpp>
+
+#ifdef HAS_PANGOLIN
 #include <cilantro/visualizer.hpp>
 #include <cilantro/common_renderables.hpp>
+#endif
 
 int main(int argc, char ** argv) {
     if (argc < 2) {
@@ -29,11 +32,13 @@ int main(int argc, char ** argv) {
         dst_points.col(i) = flat_hull.getVertices3D().col(face_v_ind[i][1]);
     }
 
+#ifdef HAS_PANGOLIN    
     cilantro::Visualizer viz("2D convex hull in 3D space", "disp");
     viz.addObject<cilantro::PointCloudRenderable>("cloud", cloud, cilantro::RenderingProperties().setOpacity(0.5));
     viz.addObject<cilantro::PointCloudRenderable>("hull_cloud", flat_hull.getVertices3D(), cilantro::RenderingProperties().setPointColor(1,0,0).setPointSize(10.0));
     viz.addObject<cilantro::PointCorrespondencesRenderable>("hull_lines", src_points, dst_points, cilantro::RenderingProperties().setLineColor(0,0,1).setLineWidth(5.0).setLineDensityFraction(1.0));
     viz.spin();
+#endif
 
     return 0;
 }

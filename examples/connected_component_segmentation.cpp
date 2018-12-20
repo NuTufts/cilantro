@@ -1,8 +1,10 @@
-#include <cilantro/connected_component_segmentation.hpp>
 #include <cilantro/point_cloud.hpp>
+#include <cilantro/timer.hpp>
+#ifdef HAS_PANGOLIN
+#include <cilantro/connected_component_segmentation.hpp>
 #include <cilantro/visualizer.hpp>
 #include <cilantro/common_renderables.hpp>
-#include <cilantro/timer.hpp>
+#endif
 
 int main(int argc, char ** argv) {
     if (argc < 2) {
@@ -56,6 +58,7 @@ int main(int argc, char ** argv) {
     // Create a new colored cloud
     cilantro::PointCloud3f cloud_seg(cloud.points, cloud.normals, colors);
 
+#ifdef HAS_PANGOLIN
     // Visualize result
     pangolin::CreateWindowAndBind("ConnectedComponentSegmentation demo", 1280, 480);
     pangolin::Display("multi").SetBounds(0.0, 1.0, 0.0, 1.0).SetLayout(pangolin::LayoutEqual)
@@ -73,6 +76,6 @@ int main(int argc, char ** argv) {
         viz2.render();
         pangolin::FinishFrame();
     }
-
+#endif
     return 0;
 }
