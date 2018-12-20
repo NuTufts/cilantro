@@ -23,7 +23,7 @@ void color_toggle(cilantro::Visualizer &viz) {
 
 void generate_input_data(cilantro::PointCloud3f &dst,
                          cilantro::PointCloud3f &src,
-                         cilantro::RigidTransformation3f &tf_ref)
+                         cilantro::RigidTransform3f &tf_ref)
 {
     dst.gridDownsample(0.005f);
 
@@ -72,7 +72,7 @@ int main(int argc, char ** argv) {
     }
 
     cilantro::PointCloud3f dst(argv[1]), src;
-    cilantro::RigidTransformation3f tf_ref;
+    cilantro::RigidTransform3f tf_ref;
 
     if (!dst.hasNormals()) {
         std::cout << "Input cloud is empty or does not have normals!" << std::endl;
@@ -98,9 +98,9 @@ int main(int argc, char ** argv) {
 //    cilantro::UnityWeightEvaluator<float> corr_weight_eval;
 //
 //    // Point-to-point
-////    cilantro::PointToPointMetricRigidICP3f<decltype(corr_engine)> icp(dst.points, src.points, corr_engine);
+////    cilantro::PointToPointMetricRigidTransformICP3f<decltype(corr_engine)> icp(dst.points, src.points, corr_engine);
 //    // Weighted combination of point-to-point and point-to-plane
-//    cilantro::CombinedMetricRigidICP3f<decltype(corr_engine)> icp(dst.points, dst.normals, src.points, corr_engine, corr_weight_eval, corr_weight_eval);
+//    cilantro::CombinedMetricRigidTransformICP3f<decltype(corr_engine)> icp(dst.points, dst.normals, src.points, corr_engine, corr_weight_eval, corr_weight_eval);
 
     // Common instances
     // Point-to-point
@@ -112,11 +112,11 @@ int main(int argc, char ** argv) {
     cilantro::SimpleCombinedMetricRigidICP3f icp(dst.points, dst.normals, src.points);
 
     // Parameter setting
-    icp.setMaxNumberOfOptimizationStepIterations(1).setPointToPointMetricWeight(0.0).setPointToPlaneMetricWeight(1.0);
+    icp.setMaxNumberOfOptimizationStepIterations(1).setPointToPointMetricWeight(0.0f).setPointToPlaneMetricWeight(1.0f);
     icp.correspondenceSearchEngine().setMaxDistance(0.1f*0.1f);
     icp.setConvergenceTolerance(1e-4f).setMaxNumberOfIterations(30);
 
-    cilantro::RigidTransformation3f tf_est = icp.estimateTransformation().getTransformation();
+    cilantro::RigidTransform3f tf_est = icp.estimate().getTransform();
 
     timer.stop();
 

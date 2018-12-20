@@ -85,9 +85,14 @@ namespace cilantro {
                    const DepthConverterT &depth_converter,
                    size_t image_w, size_t image_h,
                    const Eigen::Ref<const Eigen::Matrix<ScalarT,3,3>> &intrinsics,
-                   bool keep_invalid = false)
+                   bool keep_invalid = false,
+                   bool compute_normals = false)
         {
-            depthImageToPoints<DepthConverterT>(depth_data, depth_converter, image_w, image_h, intrinsics, points, keep_invalid);
+            if (compute_normals) {
+                depthImageToPointsNormals<DepthConverterT>(depth_data, depth_converter, image_w, image_h, intrinsics, points, normals, keep_invalid);
+            } else {
+                depthImageToPoints<DepthConverterT>(depth_data, depth_converter, image_w, image_h, intrinsics, points, keep_invalid);
+            }
         }
 
         template <class DepthConverterT, class = typename std::enable_if<EigenDim == 3 && std::is_same<typename DepthConverterT::MetricDepth,ScalarT>::value>::type>
@@ -96,9 +101,14 @@ namespace cilantro {
                    const DepthConverterT &depth_converter,
                    size_t image_w, size_t image_h,
                    const Eigen::Ref<const Eigen::Matrix<ScalarT,3,3>> &intrinsics,
-                   bool keep_invalid = false)
+                   bool keep_invalid = false,
+                   bool compute_normals = false)
         {
-            RGBDImagesToPointsColors<DepthConverterT>(rgb_data, depth_data, depth_converter, image_w, image_h, intrinsics, points, colors, keep_invalid);
+            if (compute_normals) {
+                RGBDImagesToPointsNormalsColors<DepthConverterT>(rgb_data, depth_data, depth_converter, image_w, image_h, intrinsics, points, normals, colors, keep_invalid);
+            } else {
+                RGBDImagesToPointsColors<DepthConverterT>(rgb_data, depth_data, depth_converter, image_w, image_h, intrinsics, points, colors, keep_invalid);
+            }
         }
 
         template <ptrdiff_t Dim = EigenDim, class = typename std::enable_if<Dim == 3>::type>
@@ -292,82 +302,65 @@ namespace cilantro {
             return *this;
         }
 
-        inline PointCloud& estimateNormals(const NeighborhoodSpecification<ScalarT> &nh) {
+        template <typename NeighborhoodSpecT>
+        inline PointCloud& estimateNormals(const NeighborhoodSpecT &nh) {
             normals = NormalEstimation<ScalarT,EigenDim>(points).estimateNormals(nh);
             return *this;
         }
 
+        template <typename NeighborhoodSpecT>
         inline PointCloud& estimateNormals(const KDTree<ScalarT,EigenDim,KDTreeDistanceAdaptors::L2> &kd_tree,
-                                           const NeighborhoodSpecification<ScalarT> &nh)
+                                           const NeighborhoodSpecT &nh)
         {
             normals = NormalEstimation<ScalarT,EigenDim>(kd_tree).estimateNormals(nh);
             return *this;
         }
 
-        inline PointCloud& transform(const Eigen::Ref<const Eigen::Matrix<ScalarT,EigenDim,EigenDim>> &rotation,
-                                     const Eigen::Ref<const Eigen::Matrix<ScalarT,EigenDim,1>> &translation)
-        {
-            points = (rotation*points).colwise() + translation;
-            if (hasNormals()) normals = rotation*normals;
-            return *this;
-        }
-
-        inline PointCloud transformed(const Eigen::Ref<const Eigen::Matrix<ScalarT,EigenDim,EigenDim>> &rotation,
-                                      const Eigen::Ref<const Eigen::Matrix<ScalarT,EigenDim,1>> &translation)
-        {
-            PointCloud cloud;
-            cloud.points.noalias() = (rotation*points).colwise() + translation;
-            if (hasNormals()) cloud.normals.noalias() = rotation*normals;
-            if (hasColors()) cloud.colors = colors;
-            return cloud;
-        }
-
-        template <ptrdiff_t Dim = EigenDim, class = typename std::enable_if<Dim != Eigen::Dynamic>::type>
-        inline PointCloud& transform(const Eigen::Ref<const Eigen::Matrix<ScalarT,EigenDim+1,EigenDim+1>> &tform) {
-            return transform(tform.topLeftCorner(EigenDim,EigenDim), tform.topRightCorner(EigenDim,1));
-        }
-
-        template <ptrdiff_t Dim = EigenDim, class = typename std::enable_if<Dim != Eigen::Dynamic>::type>
-        inline PointCloud transformed(const Eigen::Ref<const Eigen::Matrix<ScalarT,EigenDim+1,EigenDim+1>> &tform) {
-            return transformed(tform.topLeftCorner(EigenDim,EigenDim), tform.topRightCorner(EigenDim,1));
-        }
-
-        template <ptrdiff_t Dim = EigenDim, class = typename std::enable_if<Dim == Eigen::Dynamic>::type>
-        inline PointCloud& transform(const Eigen::Ref<const Eigen::Matrix<ScalarT,EigenDim,EigenDim>> &tform) {
-            return transform(tform.topLeftCorner(points.rows(),points.rows()), tform.topRightCorner(points.rows(),1));
-        }
-
-        template <ptrdiff_t Dim = EigenDim, class = typename std::enable_if<Dim == Eigen::Dynamic>::type>
-        inline PointCloud transformed(const Eigen::Ref<const Eigen::Matrix<ScalarT,EigenDim,EigenDim>> &tform) {
-            return transformed(tform.topLeftCorner(points.rows(),points.rows()), tform.topRightCorner(points.rows(),1));
-        }
-
-        inline PointCloud& transform(const RigidTransformation<ScalarT,EigenDim> &tform) {
-            points = tform*points;
-            if (hasNormals()) normals = tform.linear()*normals;
-            return *this;
-        }
-
-        inline PointCloud transformed(const RigidTransformation<ScalarT,EigenDim> &tform) const {
-            PointCloud cloud;
-            cloud.points.noalias() = tform*points;
-            if (hasNormals()) cloud.normals.noalias() = tform.linear()*normals;
-            if (hasColors()) cloud.colors = colors;
-            return cloud;
-        }
-
-        inline PointCloud& transform(const RigidTransformationSet<ScalarT,EigenDim> &tforms) {
+        template <class LinearT, class TranslationT>
+        inline PointCloud& transform(const LinearT &linear, const TranslationT &translation) {
             if (hasNormals()) {
-                tforms.warpPointsNormals(points, normals);
+                transformPointsNormals(linear, translation, points, normals);
             } else {
-                tforms.warpPoints(points);
+                transformPoints(linear, translation, points);
             }
             return *this;
         }
 
-        inline PointCloud transformed(const RigidTransformationSet<ScalarT,EigenDim> &tforms) const {
-            PointCloud cloud(*this);
-            cloud.transform(tforms);
+        template <class TransformT>
+        inline PointCloud& transform(const TransformT &tform) {
+            if (hasNormals()) {
+                transformPointsNormals(tform, points, normals);
+            } else {
+                transformPoints(tform, points);
+            }
+            return *this;
+        }
+
+        template <class LinearT, class TranslationT>
+        inline PointCloud transformed(const LinearT &linear, const TranslationT &translation) const {
+            PointCloud cloud;
+            cloud.points.resize(points.rows(), points.cols());
+            if (hasNormals()) {
+                cloud.normals.resize(normals.rows(), normals.cols());
+                transformPointsNormals(linear, translation, points, normals, cloud.points, cloud.normals);
+            } else {
+                transformPoints(linear, translation, points, cloud.points);
+            }
+            if (hasColors()) cloud.colors = colors;
+            return cloud;
+        }
+
+        template <class TransformT>
+        inline PointCloud transformed(const TransformT &tform) const {
+            PointCloud cloud;
+            cloud.points.resize(points.rows(), points.cols());
+            if (hasNormals()) {
+                cloud.normals.resize(normals.rows(), normals.cols());
+                transformPointsNormals(tform, points, normals, cloud.points, cloud.normals);
+            } else {
+                transformPoints(tform, points, cloud.points);
+            }
+            if (hasColors()) cloud.colors = colors;
             return cloud;
         }
 
@@ -376,11 +369,16 @@ namespace cilantro {
                                           const DepthConverterT &depth_converter,
                                           size_t image_w, size_t image_h,
                                           const Eigen::Ref<const Eigen::Matrix<ScalarT,3,3>> &intrinsics,
-                                          bool keep_invalid = false)
+                                          bool keep_invalid = false,
+                                          bool compute_normals = false)
         {
-            normals.resize(Eigen::NoChange, 0);
             colors.resize(Eigen::NoChange, 0);
-            depthImageToPoints<DepthConverterT>(depth_data, depth_converter, image_w, image_h, intrinsics, points, keep_invalid);
+            if (compute_normals) {
+                depthImageToPointsNormals<DepthConverterT>(depth_data, depth_converter, image_w, image_h, intrinsics, points, normals, keep_invalid);
+            } else {
+                normals.resize(Eigen::NoChange, 0);
+                depthImageToPoints<DepthConverterT>(depth_data, depth_converter, image_w, image_h, intrinsics, points, keep_invalid);
+            }
             return *this;
         }
 
@@ -390,10 +388,15 @@ namespace cilantro {
                                           const DepthConverterT &depth_converter,
                                           size_t image_w, size_t image_h,
                                           const Eigen::Ref<const Eigen::Matrix<ScalarT,3,3>> &intrinsics,
-                                          bool keep_invalid = false)
+                                          bool keep_invalid = false,
+                                          bool compute_normals = false)
         {
-            normals.resize(Eigen::NoChange, 0);
-            RGBDImagesToPointsColors<DepthConverterT>(rgb_data, depth_data, depth_converter, image_w, image_h, intrinsics, points, colors, keep_invalid);
+            if (compute_normals) {
+                RGBDImagesToPointsNormalsColors<DepthConverterT>(rgb_data, depth_data, depth_converter, image_w, image_h, intrinsics, points, normals, colors, keep_invalid);
+            } else {
+                normals.resize(Eigen::NoChange, 0);
+                RGBDImagesToPointsColors<DepthConverterT>(rgb_data, depth_data, depth_converter, image_w, image_h, intrinsics, points, colors, keep_invalid);
+            }
             return *this;
         }
 

@@ -3,7 +3,8 @@
 
 `cilantro` is a lean and fast C++ library for working with point cloud data, with emphasis given to the 3D case.
 It includes efficient implementations for a variety of common operations, providing a clean API and attempting to minimize the amount of boilerplate code.
-The library is extensively templated, enabling operations on point data of arbitrary numerical type and dimensionality (where applicable) and featuring a modular/extensible design of the more complex procedures, while, at the same time, providing convenience aliases/wrappers for the most common cases.
+The library is extensively templated, enabling operations on data of arbitrary numerical type and dimensionality (where applicable) and featuring a modular/extensible design of the more complex procedures.
+At the same time, convenience aliases/wrappers for the most common cases are provided.
 A high-level description of `cilantro` can be found in our [technical report](https://arxiv.org/abs/1807.00399).
 
 ## Supported functionality
@@ -68,11 +69,17 @@ One such input is bundled in `examples/test_clouds` for quick testing.
 The library is released under the [MIT license](https://github.com/kzampog/cilantro/blob/master/LICENSE).
 If you use `cilantro` in your research, please cite our [technical report](https://arxiv.org/abs/1807.00399):
 ```
-@article{cilantro,
-    author = {Konstantinos Zampogiannis and Cornelia Ferm{\"u}ller and Yiannis Aloimonos},
-    title = {cilantro: a lean, versatile, and efficient library for point cloud data processing},
-    archivePrefix = "arXiv",
-    eprint = {1807.00399},
-    year = {2018}
+@inproceedings{zampogiannis2018cilantro,
+    author = {Zampogiannis, Konstantinos and Fermuller, Cornelia and Aloimonos, Yiannis},
+    title = {cilantro: A Lean, Versatile, and Efficient Library for Point Cloud Data Processing},
+    booktitle = {Proceedings of the 26th ACM International Conference on Multimedia},
+    series = {MM '18},
+    year = {2018},
+    isbn = {978-1-4503-5665-7},
+    location = {Seoul, Republic of Korea},
+    pages = {1364--1367},
+    doi = {10.1145/3240508.3243655},
+    publisher = {ACM},
+    address = {New York, NY, USA}
 }
 ```

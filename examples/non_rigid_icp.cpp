@@ -52,17 +52,18 @@ int main(int argc, char ** argv) {
 
     // Find which control nodes affect each point in src
     std::vector<cilantro::NeighborSet<float>> src_to_control_nn;
-    control_tree.search(src.points, cilantro::kNNNeighborhood<float>(4), src_to_control_nn);
+    control_tree.search(src.points, cilantro::KNNNeighborhoodSpecification(4), src_to_control_nn);
 
     // Get regularization neighborhoods for control nodes
     std::vector<cilantro::NeighborSet<float>> regularization_nn;
-    control_tree.search(control_points, cilantro::kNNNeighborhood<float>(8), regularization_nn);
+    control_tree.search(control_points, cilantro::KNNNeighborhoodSpecification(8), regularization_nn);
 
     // Perform ICP registration
     cilantro::Timer timer;
     timer.start();
 
-    cilantro::SimpleSparseCombinedMetricNonRigidICP3f icp(dst.points, dst.normals, src.points, src_to_control_nn, control_points.cols(), regularization_nn);
+//    cilantro::SimpleCombinedMetricSparseAffineWarpFieldICP3f icp(dst.points, dst.normals, src.points, src_to_control_nn, control_points.cols(), regularization_nn);
+    cilantro::SimpleCombinedMetricSparseRigidWarpFieldICP3f icp(dst.points, dst.normals, src.points, src_to_control_nn, control_points.cols(), regularization_nn);
 
     // Parameter setting
     icp.correspondenceSearchEngine().setMaxDistance(max_correspondence_dist_sq);
@@ -75,7 +76,7 @@ int main(int argc, char ** argv) {
     icp.setPointToPointMetricWeight(0.0f).setPointToPlaneMetricWeight(1.0f).setStiffnessRegularizationWeight(200.0f);
     icp.setHuberLossBoundary(1e-2f);
 
-    auto tf_est = icp.estimateTransformation().getPointTransformations();
+    auto tf_est = icp.estimate().getDenseWarpField();
 
     timer.stop();
 
@@ -90,13 +91,14 @@ int main(int argc, char ** argv) {
 //    float max_correspondence_dist_sq = 0.04f*0.04f;
 //
 //    std::vector<cilantro::NeighborSet<float>> regularization_nn;
-//    cilantro::KDTree3f(src.points).search(src.points, cilantro::kNNNeighborhood<float>(12), regularization_nn);
+//    cilantro::KDTree3f(src.points).search(src.points, cilantro::KNNNeighborhoodSpecification(12), regularization_nn);
 //
 //    // Perform ICP registration
 //    cilantro::Timer timer;
 //    timer.start();
 //
-//    cilantro::SimpleDenseCombinedMetricNonRigidICP3f icp(dst.points, dst.normals, src.points, regularization_nn);
+////    cilantro::SimpleCombinedMetricDenseAffineWarpFieldICP3f icp(dst.points, dst.normals, src.points, regularization_nn);
+//    cilantro::SimpleCombinedMetricDenseRigidWarpFieldICP3f icp(dst.points, dst.normals, src.points, regularization_nn);
 //
 //    // Parameter setting
 //    icp.correspondenceSearchEngine().setMaxDistance(max_correspondence_dist_sq);
@@ -108,7 +110,7 @@ int main(int argc, char ** argv) {
 //    icp.setPointToPointMetricWeight(0.1f).setPointToPlaneMetricWeight(1.0f).setStiffnessRegularizationWeight(200.0f);
 //    icp.setHuberLossBoundary(1e-2f);
 //
-//    auto tf_est = icp.estimateTransformation().getTransformation();
+//    auto tf_est = icp.estimate().getTransform();
 //
 //    timer.stop();
 

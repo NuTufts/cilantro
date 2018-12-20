@@ -39,7 +39,7 @@ namespace cilantro {
         template<class... PolytopeArgs>
         SpaceRegion(PolytopeArgs... args) {
             polytopes_.emplace_back(args...);
-            dim_ = polytopes_[0].getSpaceDimension();
+            dim_ = polytopes_.back().getSpaceDimension();
         }
 
         ~SpaceRegion() {}
@@ -278,11 +278,25 @@ namespace cilantro {
             return *this;
         }
 
-        inline SpaceRegion& transform(const RigidTransformation<ScalarT,EigenDim> &tform) {
+        inline SpaceRegion& transform(const RigidTransform<ScalarT,EigenDim> &tform) {
             for (size_t i = 0; i < polytopes_.size(); i++) {
                 polytopes_[i].transform(tform);
             }
             return *this;
+        }
+
+        template <class TransformT>
+        inline SpaceRegion transformed(const TransformT &tform) const {
+            SpaceRegion res = *this;
+            res.transform(tform);
+            return res;
+        }
+
+        template <class RotationT, class TranslationT>
+        inline SpaceRegion transformed(const RotationT &rot, const TranslationT trans) const {
+            SpaceRegion res = *this;
+            res.transform(rot, trans);
+            return res;
         }
 
     protected:

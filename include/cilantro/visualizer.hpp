@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <pangolin/display/display_internal.h>
 #include <cilantro/renderable.hpp>
 #include <cilantro/visualizer_handler.hpp>
@@ -25,9 +26,9 @@ namespace cilantro {
         }
 
         template <class RenderableT, class... Args>
-        std::shared_ptr<RenderableT> addObject(const std::string &name, Args... args) {
+        std::shared_ptr<RenderableT> addObject(const std::string &name, Args&&... args) {
             gl_context_->MakeCurrent();
-            std::shared_ptr<RenderableT> obj_ptr(new RenderableT(args...));
+            std::shared_ptr<RenderableT> obj_ptr(new RenderableT(std::forward<Args>(args)...));
             renderables_[name] = ManagedRenderable(obj_ptr, std::shared_ptr<typename RenderableT::GPUBuffers>(new typename RenderableT::GPUBuffers()));
             return obj_ptr;
         }
@@ -103,7 +104,7 @@ namespace cilantro {
 
         const Visualizer& getCameraPose(Eigen::Ref<Eigen::Matrix4f> pose) const;
 
-        inline const Visualizer& getCameraPose(RigidTransformation3f &pose) const {
+        inline const Visualizer& getCameraPose(RigidTransform3f &pose) const {
             return getCameraPose(pose.matrix());
         }
 
@@ -121,13 +122,13 @@ namespace cilantro {
 
         Visualizer& setCameraPose(const Eigen::Ref<const Eigen::Matrix4f> &pose);
 
-        inline Visualizer& setCameraPose(const RigidTransformation3f &pose) {
+        inline Visualizer& setCameraPose(const RigidTransform3f &pose) {
             return setCameraPose(pose.matrix());
         }
 
         const Visualizer& getDefaultCameraPose(Eigen::Ref<Eigen::Matrix4f> pose) const;
 
-        inline const Visualizer& getDefaultCameraPose(RigidTransformation3f &pose) const {
+        inline const Visualizer& getDefaultCameraPose(RigidTransform3f &pose) const {
             return getDefaultCameraPose(pose.matrix());
         }
 
@@ -145,7 +146,7 @@ namespace cilantro {
 
         Visualizer& setDefaultCameraPose(const Eigen::Ref<const Eigen::Matrix4f> &pose);
 
-        inline Visualizer& setDefaultCameraPose(const RigidTransformation3f &pose) {
+        inline Visualizer& setDefaultCameraPose(const RigidTransform3f &pose) {
             return setDefaultCameraPose(pose.matrix());
         }
 

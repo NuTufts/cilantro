@@ -36,9 +36,9 @@ namespace cilantro {
         inline const WeightT operator()(ValueT) const { return (WeightT)1; }
 
         template <class PointT>
-        inline WeightT operator()(const PointT&, const PointT&, ValueT) const { return (WeightT)1; }
+        inline constexpr WeightT operator()(const PointT&, const PointT&, ValueT) const { return (WeightT)1; }
 
-        inline const WeightT operator()(size_t, size_t, ValueT) const { return (WeightT)1; }
+        inline constexpr WeightT operator()(size_t, size_t, ValueT) const { return (WeightT)1; }
     };
 
     template <typename ValueT, typename WeightT = ValueT, bool distances_are_squared = true>
