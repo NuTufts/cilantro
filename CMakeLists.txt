@@ -14,11 +14,11 @@ set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O3 -march=native -mtune=native")
 
 find_package(Eigen3 REQUIRED)
 
-find_package(Pangolin)
-if (Pangolin_FOUND)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAS_PANGOLIN")
-  set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -DHAS_PANGOLIN")
-endif()
+#find_package(Pangolin)
+#if (Pangolin_FOUND)
+#  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHAS_PANGOLIN")
+#  set (CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -DHAS_PANGOLIN")
+#endif()
 
 find_package(OpenMP)
 if (OPENMP_FOUND)
