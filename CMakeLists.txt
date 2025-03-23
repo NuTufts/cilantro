@@ -6,9 +6,21 @@ project(cilantro)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 set(CMAKE_BUILD_TYPE "Release")
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-O3 -march=native -mtune=native")
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O3 -march=native -mtune=native")
+execute_process(
+    COMMAND bash "-c" "root-config --features"
+    OUTPUT_VARIABLE TEST_ROOT_CXX_STANDARD )
+if (${TEST_ROOT_CXX_STANDARD} MATCHES "cxx17")
+  message( STATUS "using cxx17")
+  set(CMAKE_CXX_STANDARD 17)
+elseif (${TEST_ROOT_CXX_STANDARD} MATCHES "cxx14")
+  message(STATUS "using cxx14")
+  set(CMAKE_CXX_STANDARD 14)
+else ()
+  message( STATUS "using cxx11")  
+  set(CMAKE_CXX_STANDARD 11)
+endif()
+#set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-O3 -march=native -mtune=native")
+#set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-O3 -march=native -mtune=native")
 
 # Packages
 
